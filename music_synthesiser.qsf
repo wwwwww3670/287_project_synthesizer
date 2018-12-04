@@ -1,0 +1,159 @@
+# -------------------------------------------------------------------------- #
+#
+# Copyright (C) 2016  Intel Corporation. All rights reserved.
+# Your use of Intel Corporation's design tools, logic functions 
+# and other software and tools, and its AMPP partner logic 
+# functions, and any output files from any of the foregoing 
+# (including device programming or simulation files), and any 
+# associated documentation or information are expressly subject 
+# to the terms and conditions of the Intel Program License 
+# Subscription Agreement, the Intel Quartus Prime License Agreement,
+# the Intel MegaCore Function License Agreement, or other 
+# applicable license agreement, including, without limitation, 
+# that your use is for the sole purpose of programming logic 
+# devices manufactured by Intel and sold by Intel or its 
+# authorized distributors.  Please refer to the applicable 
+# agreement for further details.
+#
+# -------------------------------------------------------------------------- #
+#
+# Quartus Prime
+# Version 16.1.0 Build 196 10/24/2016 SJ Lite Edition
+# Date created = 16:49:33  November 06, 2018
+#
+# -------------------------------------------------------------------------- #
+#
+# Notes:
+#
+# 1) The default values for assignments are stored in the file:
+#		music_synthesiser_assignment_defaults.qdf
+#    If this file doesn't exist, see file:
+#		assignment_defaults.qdf
+#
+# 2) Altera recommends that you do not modify this file. This
+#    file is updated automatically by the Quartus Prime software
+#    and any changes you make may be lost or overwritten.
+#
+# -------------------------------------------------------------------------- #
+
+
+set_global_assignment -name FAMILY "Cyclone IV E"
+set_global_assignment -name DEVICE EP4CE115F29C7
+set_global_assignment -name TOP_LEVEL_ENTITY audio_codec
+set_global_assignment -name ORIGINAL_QUARTUS_VERSION 16.1.0
+set_global_assignment -name PROJECT_CREATION_TIME_DATE "16:49:33  NOVEMBER 06, 2018"
+set_global_assignment -name LAST_QUARTUS_VERSION "16.1.0 Lite Edition"
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
+set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 1
+set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
+set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
+set_location_assignment PIN_F2 -to AUD_BCLK
+set_location_assignment PIN_C2 -to AUD_ADCLRCK
+set_location_assignment PIN_E3 -to AUD_DACLRCK
+set_location_assignment PIN_D1 -to AUD_DACDAT
+set_location_assignment PIN_Y2 -to clock_50
+set_location_assignment PIN_B7 -to FPGA_I2C_SCLK
+set_location_assignment PIN_A8 -to FPGA_I2C_SDAT
+set_location_assignment PIN_E1 -to AUD_XCK
+set_location_assignment PIN_D2 -to AUD_ADCDAT
+set_location_assignment PIN_AA23 -to key[0]
+set_location_assignment PIN_AA22 -to key[1]
+set_location_assignment PIN_Y24 -to key[2]
+set_location_assignment PIN_Y23 -to key[3]
+set_location_assignment PIN_G6 -to ps2_clk_in
+set_location_assignment PIN_H5 -to ps2_data_in
+set_location_assignment PIN_H15 -to press_flag
+set_location_assignment PIN_F22 -to press_key[1]
+set_location_assignment PIN_E17 -to press_key[2]
+set_location_assignment PIN_L26 -to press_key[3]
+set_location_assignment PIN_L25 -to press_key[4]
+set_location_assignment PIN_J22 -to press_key[5]
+set_location_assignment PIN_H22 -to press_key[6]
+set_location_assignment PIN_G18 -to press_key[0]
+set_location_assignment PIN_R24 -to shl
+set_location_assignment PIN_N21 -to shr
+set_global_assignment -name VHDL_FILE ps2_keyboard.vhd
+set_global_assignment -name VHDL_FILE debounce.vhd
+set_global_assignment -name VHDL_FILE sine_wave.vhd
+set_global_assignment -name VHDL_FILE sine_package.vhd
+set_global_assignment -name VHDL_FILE i2c.vhd
+set_global_assignment -name VHDL_FILE aud_gen.vhd
+set_global_assignment -name VHDL_FILE audio_codec.vhd
+set_global_assignment -name CDF_FILE output_files/Chain1.cdf
+set_global_assignment -name CDF_FILE output_files/Chain3.cdf
+set_global_assignment -name CDF_FILE output_files/Chain4.cdf
+set_global_assignment -name CDF_FILE output_files/Chain5.cdf
+set_global_assignment -name VHDL_FILE "C:/Users/xuh14/Desktop/music synthesizer/sine_package.vhd"
+set_global_assignment -name VHDL_FILE ps2_key.vhd
+set_global_assignment -name CDF_FILE output_files/Chain7.cdf
+set_global_assignment -name CDF_FILE output_files/Chain9.cdf
+set_global_assignment -name CDF_FILE output_files/Chain12.cdf
+set_global_assignment -name CDF_FILE output_files/Chain14.cdf
+set_global_assignment -name CDF_FILE output_files/Chain15.cdf
+set_global_assignment -name CDF_FILE output_files/Chain19.cdf
+set_global_assignment -name CDF_FILE output_files/Chain20.cdf
+set_global_assignment -name CDF_FILE output_files/Chain21.cdf
+set_global_assignment -name CDF_FILE "C:/Users/xuh14/AppData/Roaming/Microsoft/Windows/Network Shortcuts/Chain25.cdf"
+set_global_assignment -name CDF_FILE "C:/Users/xuh14/Pictures/Chain26.cdf"
+set_global_assignment -name CDF_FILE output_files/Chain27.cdf
+set_global_assignment -name CDF_FILE "C:/Users/xuh14/Pictures/Chain29.cdf"
+set_global_assignment -name CDF_FILE "C:/Users/xuh14/Pictures/Chain32.cdf"
+set_global_assignment -name CDF_FILE "C:/Users/xuh14/Pictures/Chain33.cdf"
+set_global_assignment -name CDF_FILE output_files/Chain34.cdf
+set_global_assignment -name CDF_FILE output_files/Chain2.cdf
+set_global_assignment -name CDF_FILE "C:/Users/xuh14/Pictures/Chain3.cdf"
+set_global_assignment -name CDF_FILE "C:/Users/xuh14/Desktop/Chain5.cdf"
+set_global_assignment -name CDF_FILE output_files/Chain8.cdf
+set_global_assignment -name CDF_FILE output_files/Chain11.cdf
+set_global_assignment -name CDF_FILE "C:/Users/xuh14/Pictures/Chain13.cdf"
+set_global_assignment -name CDF_FILE "C:/intelFPGA_lite/16.1/output_files/Chain14.cdf"
+set_global_assignment -name CDF_FILE "C:/Users/xuh14/Pictures/Chain15.cdf"
+set_global_assignment -name CDF_FILE "C:/Users/xuh14/Pictures/Chain16.cdf"
+set_global_assignment -name CDF_FILE "C:/Users/xuh14/Pictures/Chain20.cdf"
+set_global_assignment -name CDF_FILE output_files/Chain22.cdf
+set_global_assignment -name CDF_FILE output_files/Chain23.cdf
+set_global_assignment -name CDF_FILE output_files/Chain24.cdf
+set_global_assignment -name CDF_FILE "C:/Users/xuh14/Pictures/Chain25.cdf"
+set_global_assignment -name CDF_FILE "C:/Users/xuh14/Pictures/Chain28.cdf"
+set_global_assignment -name CDF_FILE output_files/Chain30.cdf
+set_location_assignment PIN_F21 -to led_out[0]
+set_location_assignment PIN_F18 -to led_out[1]
+set_location_assignment PIN_E18 -to led_out[2]
+set_location_assignment PIN_J19 -to led_out[3]
+set_location_assignment PIN_H19 -to led_out[4]
+set_location_assignment PIN_J17 -to led_out[5]
+set_location_assignment PIN_G17 -to led_out[6]
+set_location_assignment PIN_J15 -to led_out[7]
+set_location_assignment PIN_H16 -to led_out[8]
+set_location_assignment PIN_J16 -to led_out[9]
+set_location_assignment PIN_H17 -to led_out[10]
+set_location_assignment PIN_G19 -to mute_led
+set_location_assignment PIN_M23 -to volume_up
+set_location_assignment PIN_M21 -to volume_down
+set_location_assignment PIN_F19 -to volume_up_led
+set_location_assignment PIN_E19 -to volume_down_led
+set_location_assignment PIN_AB28 -to sw[0]
+set_location_assignment PIN_AC28 -to sw[1]
+set_location_assignment PIN_AC27 -to sw[2]
+set_location_assignment PIN_AD27 -to sw[3]
+set_location_assignment PIN_AB27 -to sw[4]
+set_location_assignment PIN_AC26 -to sw[5]
+set_location_assignment PIN_AD26 -to sw[6]
+set_global_assignment -name VHDL_FILE square_wave.vhd
+set_global_assignment -name VHDL_FILE sawtooth_package.vhd
+set_global_assignment -name VHDL_FILE sawtooth_wave.vhd
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_location_assignment PIN_AB25 -to carrier_select_in[0]
+set_location_assignment PIN_AC24 -to carrier_select_in[1]
+set_location_assignment PIN_AA19 -to out_note_number[1]
+set_location_assignment PIN_AG21 -to out_note_number[2]
+set_location_assignment PIN_AH21 -to out_note_number[3]
+set_location_assignment PIN_AE19 -to out_note_number[4]
+set_location_assignment PIN_AF19 -to out_note_number[5]
+set_location_assignment PIN_AE18 -to out_note_number[6]
+set_location_assignment PIN_AB19 -to out_note_number[0]
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
