@@ -1,7 +1,7 @@
 # 287_project_synthesizer
 
 
-This is the README page, please notify that the copyright is reserved for <xuh14@miamioh.edu> [2018]. If you have any question, this email address is available. 
+This is the README page, please notify that the copyright is reserved for <xuh14@miamioh.edu> <xud4@miamioh.edu>[2018]. If you have any question, this email address is available. 
 
 
 i2c files in WM8931 and PS/2 interface are adaptive from the following provider. Please notify that they have reserved the right, and thanks to their good work!
