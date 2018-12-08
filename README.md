@@ -1,6 +1,6 @@
 # 287_project_synthesizer
 
-
+---------------------------------------------------------------------------------------------------------------------------------
 This is the README page, please notify that the copyright is reserved for <xuh14@miamioh.edu> <xud4@miamioh.edu>[2018]. If you have any question, this email address is available. 
 
 
@@ -8,7 +8,14 @@ i2c files in WM8931 and PS/2 interface are adaptive from the following provider.
 
 Scott Larson https://www.digikey.com/eewiki/pages/viewpage.action?pageId=28278929
 AntonZero https://github.com/AntonZero/WM8731-Audio-codec-on-DE10Standard-FPGA-board
+---------------------------------------------------------------------------------------------------------------------------------
 
+
+
+Updates: 
+December 7, 2018
+
+Record & Replay function added.
 
 
 Description:
@@ -26,8 +33,6 @@ The order followed by, sw6 high, sw0 high, sw1 high, sw2 high, sw3 high, then if
 To reach to lower or higher band of the sound, press button1 or button2. LEDs will light up to indicate the selected band.
 
 
-
-
 Warning:
 
 The project is still a going on progress. Several issues have been reported with regard of its functionality and difference with the actual conmertial music synthesizer.
@@ -35,5 +40,86 @@ The project is still a going on progress. Several issues have been reported with
 1. Tone is not decimal precision. Move into higher band will result into more tone deviation of the original sound.
 2. sound sample is only 8-bit in width, this results into distortion when moving into lower frequencies. It can be dealed partially by edit the prescaler value in the aud_gen file. 
 3. sound is sometimes came out delayed
+
+---------------------------------------------------------------------------------------------------------------------------------
+Accomplishments
+I: Generation of Basic Sound
+
+    By configure PS/2 interface and setting correct values in WM8731 registers, the synthesizer can detect a key been pressed by the user, and lights up 7 LED segments to indicate the current note playing. The key been pressed then is recognized by the tone generator and will output a value in 16 bits to the Codec. The DAC inside Codec will convert it into an analog voltage and generate a sound when it reaches the speaker side.
+
+II: Tone & Band Selection
+
+    By passing different tone clocks to the tone generator,  different tones of the sound can be generated with the range from C1 to A9 corresponded to frequency representation from 32.7Hz to 3520Hz. The default note band is set at C5, with only one LED in the center lights up. To move to other bands, button 4 will move the tone to a lower band while button 3 will go to the higher band. To view the current band selection, see how many LED appears at each side of the center LED or simply check the segment display, which contains the number presentation of the current band selection. The range covers most of the frequently playing notes while maintaining considerably good sound quality through almost all bands. Though, some distortion of the sound has been reported for low frequency due to relatively large step sizes in our tone generator in comparison to its 16 bits output. The note frequency is quantized to integer level, thus when moving to higher band, note will have expected deviation of 2 Hz. The issues though, will be addressed in the future.
+
+III: Different Sound Carrier Selection
+
+    The implemented music synthesizer will also provide different flavors of sound carriers selection. User can choose among sine, square and sawtooth wave by moving sw(9) and sw(10) to the corresponded position, where sw(10) is the MSB and sw(9) is the LSB. Sine wave is set at default and in order to generate square wave, switches position should be at “01” or “10” for sawtooth wave. This feature has been tested with the industrial sawtooth, square and sine sound. And for the user’s experience, the difference is nearly undetectable by ear.
+
+IV: Mute Function & Volume Selection
+
+    To provide for more realistic condition when output speaker is confined with some basic operations, the synthesizer does have the capabilities to adjust its volume with also a mute function implemented. Both volume and mute function are adjusted by changing binary values inside WM8731 registers and in order to trigger it, sw(6), sw(3), sw(2), sw(1) and sw(0) has to be high to tell WM8731 of the current status. After that, pressing button 2 will lower the volume while button 1 will increase the volume. To mute the sound, sw(5) will need to be set high. Both functions have LED indicator to show the process for better visualizeation.
+
+V: Record & Replay Function
+
+    The record feature adds more improvisation feature to the user space. It addresses the realistic scenario in live or preparation situation, where users can record the sequence of the notes, and replay them whenever needed. For the current version of the feature, it can provide user with maximum twenty seconds while up to 20 different notes. To trigger record, sw(15) will need to be set high, LEDR(15) will light up to indicate the process and set low sw(15) upon finish. To replay the recorded sequence of notes, sw(14) needs to be set high, LEDR(14) will light up to indicate the process and sw(15) should be set low for the entire replay process. The case for sw(15) and sw(14) being high at the same time is not tested and yields behavioural uncertainty.  Upon finish, set sw(14) low to clear all the data and is ready to record for the next cycle.
+
+Approach
+
+I: Generation of Basic Sound
+
+    In implementation for the PS/2 interface, keys are sent via a I2C bus byte by byte with its scan codes. Whenever a user presses a key, the scan code for that key will be received from the master data pin on the DE115 board. For key ‘a’, 1C will be received. To indicate a key being released, scan codes with ‘F0’ will be sent, thus if ‘a’ is released, bytes received will be ‘F01C’. Therefore, a FSM can be used to repeatedly captured the states and values of the key. Whenever a break key is detected, the FSM will go back to the stage, where it detects the first byte, then upon reading two bytes, a break indicator will be set ‘1’ and the process will repeat. In our board UI, when a key is been pressed, key_press_flag will be ‘1’ and is set ‘0’ when the key is released. The use of this LED indicator has eased our job to test some other functionalities. To focus on the main functionalities of the proposed music synthesizer, we have adopted the PS/2 interface I2C code from the online source. The code from the online source has converted the received bytes to ascii value accordingly, thus, we use if statement to convert the received ascii values to LED segments values which then will output to our audio_codec file using the component method. For the Codec interface, we have also adopted the online code for the I2C FSM. It basically serves the same logic though a prescaler has been added additionally to reach the WM8731 requirements of sampling rate. For a sampling rate of 48kHz, BOSR, which represents the prescaler, needed to be 256. Thus, for 256 samples going into the Codec, only 1 sample will be read. Though, we have faced some problem with this value, where because our tone generator has only 512 values in one perioc, higher prescaler means less audio quality in lower frequency region. To adapt with our tone generator size, we have overclocked the prescaler value to be 65. The output sound quality is greatly improved though the tone of the sound does not change with different value for the prescaler. This is because the samples are self-fitted into the time grid of the WM8731 if a supported MCLK frequency of around 12MHz is provided. In our code, we have given a 12.5MHz sampling clock to the WM8731 and as a result, successfully generated a sound with the output waveform that will be discussed in the next section.
+
+
+
+II: Tone & Band Selection
+
+    As been addressed before, different notes can be generated by passing different tone clock to the tone generator with sound frequency been the result from dividing the clock frequency with the period of the sound carrier. In this case, for steps of 512 in one period, 267.8 kHz clock will need to be passed to the tone generator for a 383 Hz output sound, indicating C5. The clock is generated with a max note counter that serves as a divider from the 50 MHz clock.  From Figure. 1 we can see tmp (tone clock) will be reversed when count equals counter_max. Here, count will be incremented by 1 in 50 MHz speed while counter_max is a preset value set algorithmly when users pressed a key on the keyboard for a certain note. The count is restored to zero when it reaches the max value and thus tmp will serves as a clock been divided from the 50 MHz clock. As been said, counter_max will be set whenever users presses a key. More precisely, the counter_max will be set to the corresponded preset counter_max_a or counter_max_b etc. values for generating a A note or B note etc. From Figure. 2, we can see counter_max_c is 187 / 2, where 187 is the output by dividing 50 MHz with 267.8 kHz, and needed to be divided by 2 to partition time between ‘1’ and ‘0’. 
+
+                  
+Figure. 1 tone clock implementation 1
+
+
+
+Figure. 2 tone clock implementation 2
+
+To generate notes in other bands, such as C6 from C5, a twice faster tone clock will need to be passed to the tone generator. To accomplish this, 10 different counters are added besides the default counter and with the band indicator (shift_count in Figure. 3), clock from that specific band will be generated correspondingly. Besides, LEDs will also light up indicate the selected band by the following code, and will be decremented or incremented by pressing button 4 or button 3.
+
+
+Figure. 3  band selection indicator
+
+III: Different Sound Carrier Selection
+
+The tone generator in this sense, is comprised by a incrementer with a lookup table package. For sine wave package, 128 values are manually entered from 0 to 32764 within the 16 bit range. All values are generated using Matlab script to find the output of a sine wave in ¼ cycle with 128 steps. Then, by using a FSM, with states: couting_up, counting_down, change_up and change_down, values and index from the look up table is reversed to form a full period sine wave. This is shown is Figure. 1. To generate a square wave, all values above 0 from sine wave package is set at 32764 while values below 0 will be set at -32764. To generate a sawtooth wave, we have first recorded 255 values ½ period in the sawtooth package, then, by reversing the index and values, sawtooth wave be generated as Figure. 5 shown. 
+
+                        
+Figure. 4 sine wave FSM                                                              Figure. 5 sawtooth wave implementation
+
+
+IV: Mute Function & Volume Manipulation
+
+    Mute and Volume functions are simply implemented by changing register values. The volume 7 bits is set at "1111001" in default, an increment will be added or subtracted to that value whenever users pressed button 1 or button 2. Then, by passing the new volume 7 bits value to the register, volume can be controlled. To mute the output sound, with sw(5) being set high, sending “0000000” to the register indicated zero volume as Figure. 6 shown.
+
+
+Figure. 6 Volume & Mute implementation
+
+
+V: Record & Replay Function
+
+    To record a sequence of notes, two integer arrays are used to store both the time and key related in a certain sequence. The rest and press time of a note is stored sequentially in the first array, memory_time with the first entry been the rest time until the first key been pressed. As considering rest time been ‘0’ and press time been ‘1’, the entry will be an array of “010101010” where the odd index will always been the pressing time. The rest time will be recorded whenever cpress_flag is ‘1’ with the last_cpress_flag being ‘0’ while the press time will be recorded if both cpress_flag and last_cpress_flag are ‘1’. This is shown in Figure. 7. Upon finish, the last rest time will be recorded when user switches off sw(15).
+
+
+Figure. 7 Recording press and release time
+
+Keys been pressed are stored in an array called memory_key. It is recorded whenever key_press_flag is ‘1’ with its last value been ‘1’ as well. This is shown in Figure. 8
+
+
+
+Figure. 8 Recording Key
+
+Numeric representation are used to indicate which key been pressed with 1 indicating note A etc. To play back the sequence stored in the arrays, a counter will be incremented until it reaches the value for certain entry in the time array. Then, its value will be restored to zero. An index for the key array will also increment whenever the time counter reaches the entry stored in the time array. At that specific moment, play_flag will be set high if the replay_index is at odd position indicating the next time duration is for the press time. The algorithm is shown in Figure. 9.
+
+
+Figure. 9  Replay Algorithm
+
 
 
