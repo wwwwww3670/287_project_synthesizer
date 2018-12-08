@@ -17,7 +17,6 @@ AUD_DACDAT: out std_logic;
 ---------FPGA pins-----
 
 clock_50: in std_logic;
-key: in std_logic_vector(3 downto 0);
 sw: in std_logic_vector(9 downto 0);
 FPGA_I2C_SCLK: out std_logic;
 FPGA_I2C_SDAT: inout std_logic;
@@ -38,7 +37,12 @@ volume_down_led: out std_logic; -- volume down led
 mute_led: out std_logic;
 led_out : out std_logic_vector(10 downto 0);
 carrier_select_in : in std_logic_vector(1 downto 0); --00 sin, 01 square, 10 sawtooth
-out_note_number : out std_logic_vector(6 downto 0)
+out_note_number : out std_logic_vector(6 downto 0);
+--------record----------
+record_sw : in std_logic;
+replay_sw : in std_logic;
+replay_led : out std_logic;
+record_led : out std_logic   -- toggel 3 times when replay
 );
 
 end audio_codec;
@@ -95,6 +99,29 @@ signal square_out: std_logic_vector(15 downto 0);
 signal sawtooth_out: std_logic_vector(15 downto 0);
 signal carrier_select : std_logic_vector(1 downto 0);
 signal note_number : std_logic_vector(6 downto 0);
+
+---------------record parameters--------------------
+type int_array is array(0 to 100000) of integer;
+signal memory_key : int_array;
+signal memory_time : int_array;
+signal crecord_sw : std_logic := '0';
+signal creplay_sw : std_logic;
+signal crecord_led : std_logic := '0';   -- toggel 3 times when replay
+signal creplay_led : std_logic;
+signal rtime_counter : std_logic_vector(30 downto 0);
+signal ptime_counter : std_logic_vector(30 downto 0);
+signal last_crecord_sw : std_logic := '0';
+signal cpress_flag : std_logic := '0';
+signal last_cpress_flag : std_logic := '0';
+signal index : integer range 0 to 99 := 0;
+signal key_index : integer range 0 to 30 := 0;
+signal key_nobreak : std_logic_vector(6 downto 0) := "0000000";
+signal replay_counter : std_logic_vector(30 downto 0);
+signal play_flag : std_logic := '0';
+signal replay_press_key : std_logic_vector(6 downto 0);
+signal replay_index : integer range 0 to 30 := 0;
+signal replay_key_index : integer range 0 to 30 := 0;
+signal max_index : integer range 0 to 30 := 0;
 
  component aud_gen is
  port (
@@ -305,6 +332,127 @@ begin
 ------------------------------------------------------------
 end process sine_tone;
 
+record_process : process(clock_50)
+begin
+	if (rising_edge(clock_50)) then
+		------------detect record pressed, and record time------------
+		---1. when record button is pressed, reset the counter at the first time frame.
+		---2. increment the rtime_counter, and restore the counter value when a key is pressed in the first time frame.
+		---   reset the ptime_counter
+		---3. increment the ptime_counter for the rest of time frame when a key is pressed. reset rtime_counter every time.
+		---4. if key is let go, in the first time frame, record the pressed time.
+		--------------------------------------------------------------
+		record_led <= crecord_led;
+		crecord_sw <= record_sw;
+		cpress_flag <= key_press_flag;
+		
+		if (crecord_sw = '1') then
+			crecord_led <= '1';
+			if (last_crecord_sw = '0') then
+				rtime_counter <= (others => '0');   --reset counter when sw is pressed at the first time frame.
+			else	
+				rtime_counter <= rtime_counter + 1;
+				if (cpress_flag = '1') then
+					if (last_cpress_flag = '0') then  --record rest time 
+						memory_time(index) <= to_integer(unsigned(rtime_counter));
+						index <= index + 1;
+						ptime_counter <= (others => '0');
+					else -----record key pressed time
+						ptime_counter <= ptime_counter + 1;
+						rtime_counter <= (others => '0');
+					end if;
+				end if;
+				if (last_cpress_flag = '1') then
+					-----------detect which key is pressed-----------
+					if (cpress_flag = '0') then 
+						key_index <= key_index + 1;
+						memory_time(index) <= to_integer(unsigned(ptime_counter));
+						rtime_counter <= (others => '0');
+						index <= index + 1;
+					else
+						if key_nobreak = "0001000" then   --a
+							memory_key(key_index) <= 1;
+						elsif key_nobreak = "0000011" then  --b
+							memory_key(key_index) <= 2;
+						elsif key_nobreak = "1000110" then  --c
+							memory_key(key_index) <= 3;
+						elsif key_nobreak = "0100001" then  --d
+							memory_key(key_index) <= 4;
+						elsif key_nobreak = "0000110" then  --e
+							memory_key(key_index) <= 5;
+						elsif key_nobreak = "0001110" then  --f
+							memory_key(key_index) <= 6;
+						elsif key_nobreak = "0010000" then  --g
+							memory_key(key_index) <= 7;
+						end if;
+					end if;
+				end if;
+			end if;
+		else
+			crecord_led <= '0';
+			key_index <= 0;     ----when record sw is released, reset index.
+			if (NOT(index = 0)) then
+				memory_time(index) <= to_integer(unsigned(rtime_counter));
+				max_index <= index;
+			end if;
+			index <= 0;
+		end if;
+		last_crecord_sw <= crecord_sw;
+		last_cpress_flag <= cpress_flag;
+	end if;
+end process record_process;
+
+replay_process : process(clock_50, replay_press_key) 
+begin
+	if (rising_edge(clock_50)) then 
+		replay_led <= creplay_led;
+		creplay_sw <= replay_sw;
+	------------when the replay is pressed, reading array values------------------
+		if(creplay_sw = '1') then
+			creplay_led <= '1';
+			replay_counter <= replay_counter + 1;
+			if (replay_counter = memory_time(replay_index)) then
+			if (replay_index < max_index) then
+				replay_index <= replay_index + 1;
+			end if;        ---- 0 1 0 1 0 1 0   odd.
+				if(NOT(replay_index rem 2 = 1)) then   ---press duration is stored in odd index.
+					play_flag <= '1';  --- output sound
+					
+					-------copy the key interger to the press key--------------
+					if (memory_key(replay_key_index)) = 1 then
+						replay_press_key <= "0001000";
+					elsif memory_key(replay_key_index) = 2 then
+						replay_press_key <= "0000011";
+					elsif memory_key(replay_key_index) = 3 then
+						replay_press_key <= "1000110";
+					elsif memory_key(replay_key_index) = 4 then
+						replay_press_key <= "0100001";
+					elsif memory_key(replay_key_index) = 5 then
+						replay_press_key <= "0000110";
+					elsif memory_key(replay_key_index) = 6 then
+						replay_press_key <= "0001110";
+					elsif memory_key(replay_key_index) = 7 then
+						replay_press_key <= "0010000";
+					end if;
+					replay_key_index <= replay_key_index + 1;
+				else
+					play_flag <= '0';
+				end if;
+				replay_counter <= (others => '0');  -- reset the counter when reach time in memory
+			end if;
+			if (replay_index = max_index) then
+				play_flag <= '0';
+			end if;
+		else
+			replay_index <= 0;
+			replay_key_index <= 0;
+			replay_counter <= (others => '0');
+			creplay_led <= '0';
+			play_flag <= '0'; --stop the sound.
+		end if;
+	end if;
+end process replay_process;
+
 
 sixteen_bit_sine: component sine_wave
 		port map( 
@@ -359,6 +507,7 @@ end process p_clk_divider;
 process(clock_50)
 begin 
 	press_key <= sig_press_key;
+	key_nobreak <= sig_press_key;   ---the key signal with no break.
 	if sig_press_key = "0001000" then   --a
 		counter_max <= counter_max_a;
 	elsif sig_press_key = "0000011" then  --b
@@ -373,6 +522,24 @@ begin
 		counter_max <= counter_max_f;
 	elsif sig_press_key = "0010000" then  --g
 		counter_max <= counter_max_g;
+	end if;
+	
+	if (creplay_sw = '1') then
+		if replay_press_key = "0001000" then   --a
+			counter_max <= counter_max_a;
+		elsif replay_press_key = "0000011" then  --b
+			counter_max <= counter_max_b;
+		elsif replay_press_key = "1000110" then  --c
+			counter_max <= counter_max_c;
+		elsif replay_press_key = "0100001" then  --d
+			counter_max <= counter_max_d;
+		elsif replay_press_key = "0000110" then  --e
+			counter_max <= counter_max_e;
+		elsif replay_press_key = "0001110" then  --f
+			counter_max <= counter_max_f;
+		elsif replay_press_key = "0010000" then  --g
+			counter_max <= counter_max_g;
+		end if;
 	end if;
 
 	counter_max_div2 <= counter_max / 2;
@@ -453,6 +620,14 @@ if rising_edge(clock_12)then
 		else
 			aud_mono(15 downto 0)<=ROM_OUT;----mono sound
 			aud_mono(31 downto 16)<=ROM_OUT;
+		end if;
+		if creplay_sw = '1' then   -- if the replay sw is pressed
+			if play_flag = '1' then  -- if the index is at odd position
+				aud_mono(15 downto 0)<=ROM_OUT;----mono sound
+				aud_mono(31 downto 16)<=ROM_OUT;
+			else  -- if the index is at the even position, mute the sound.
+				aud_mono(31 downto 0) <= (others => '0');
+			end if;
 		end if;
 end if;
 end process;
